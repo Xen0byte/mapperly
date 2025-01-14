@@ -1,24 +1,19 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static Riok.Mapperly.Emit.Syntax.SyntaxFactoryHelper;
 
 namespace Riok.Mapperly.Descriptors.Mappings;
 
 /// <summary>
 /// Represents a cast mapping.
 /// </summary>
-public class CastMapping : TypeMapping
+public class CastMapping(ITypeSymbol sourceType, ITypeSymbol targetType, INewInstanceMapping? delegateMapping = null)
+    : NewInstanceMapping(sourceType, targetType)
 {
-    private readonly TypeMapping? _delegateMapping;
-
-    public CastMapping(ITypeSymbol sourceType, ITypeSymbol targetType, TypeMapping? delegateMapping = null)
-        : base(sourceType, targetType)
+    public override ExpressionSyntax Build(TypeMappingBuildContext ctx)
     {
-        _delegateMapping = delegateMapping;
-    }
-
-    public override ExpressionSyntax Build(ExpressionSyntax source)
-    {
-        return CastExpression(IdentifierName(TargetType.ToDisplayString()), _delegateMapping != null ? _delegateMapping.Build(source) : source);
+        var objToCast = delegateMapping != null ? delegateMapping.Build(ctx) : ctx.Source;
+        return CastExpression(FullyQualifiedIdentifier(TargetType), objToCast);
     }
 }
